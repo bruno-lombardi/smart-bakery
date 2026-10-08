@@ -23,7 +23,7 @@ export default function SettingsPage() {
   const [hourly, setHourly] = useState<number | null>(s.hourlyRate)
   const [margin, setMargin] = useState<number | null>(s.defaultMarginPct)
   const [overhead, setOverhead] = useState<number | null>(s.overheadPct)
-  const [goal, setGoal] = useState<number | null>(s.monthlyGoal || null)
+  const [goal, setGoal] = useState<number | null>(s.monthlyProfitGoal || null)
   const [round, setRound] = useState(String(s.roundTo))
   const [loaded, setLoaded] = useState(false)
 
@@ -31,7 +31,7 @@ export default function SettingsPage() {
     db.settings.get('main').then((saved) => {
       if (saved) {
         setOwner(saved.ownerName); setBusiness(saved.businessName); setHourly(saved.hourlyRate)
-        setMargin(saved.defaultMarginPct); setOverhead(saved.overheadPct); setGoal(saved.monthlyGoal || null); setRound(String(saved.roundTo))
+        setMargin(saved.defaultMarginPct); setOverhead(saved.overheadPct); setGoal(saved.monthlyProfitGoal || null); setRound(String(saved.roundTo))
       }
       setLoaded(true)
     })
@@ -49,7 +49,7 @@ export default function SettingsPage() {
       hourlyRate: hourly ?? 0,
       defaultMarginPct: margin ?? 0,
       overheadPct: overhead ?? 0,
-      monthlyGoal: goal ?? 0,
+      monthlyProfitGoal: goal ?? 0,
       roundTo: Number(round),
     })
     toast('Ajustes salvos ✓')
@@ -95,7 +95,7 @@ export default function SettingsPage() {
             </select>
           </Field>
         </div>
-        <Field label="Meta de faturamento do mês (opcional)" htmlFor="s-goal"><MoneyInput id="s-goal" value={goal} onChange={setGoal} /></Field>
+        <Field label="Meta de lucro do mês" htmlFor="s-goal" hint="O que sobra depois de todos os custos. Você acompanha em Metas."><MoneyInput id="s-goal" value={goal} onChange={setGoal} /></Field>
         <button className="btn primary" disabled={!loaded} onClick={saveAll} style={{ alignSelf: 'flex-start' }}><Icon name="check" /> Salvar ajustes</button>
       </section>
 

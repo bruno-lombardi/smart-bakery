@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { db } from '../db/db'
 import { loadExamples } from '../db/seed'
 import { useIngredientMap, useIngredients, useProducts, useSettings } from '../db/hooks'
@@ -9,7 +10,8 @@ import { Icon } from '../components/Icon'
 import { IngredientForm } from '../components/IngredientForm'
 import { ProductForm } from '../components/ProductForm'
 import { formatBRL, formatPct } from '../lib/money'
-import { computeCost, computeProfit, ingredientCostPerBase, sellingPrice } from '../lib/pricing'
+import { productEconomics, type Health } from '../lib/goals'
+import { ingredientCostPerBase } from '../lib/pricing'
 import { baseUnitOf } from '../lib/units'
 
 type Tab = 'produtos' | 'insumos'
@@ -38,9 +40,15 @@ function ProductsTab() {
   const ingMap = useIngredientMap()
   const settings = useSettings()
   const { toast, confirm } = useFeedback()
-  const [editing, setEditing] = useState<Product | 'new' | null>(null)
+  const [params, setParams] = useSearchParams()
+  const [editing, setEditing] = useState<Product | 'new' | null>(params.get('novo') ? 'new' : null)
 
   if (!products) return null
+
+  const closeForm = () => {
+    setEditing(null)
+    if (params.get('novo')) setParams({}, { replace: true })
+  }
 
   async function remove(p: Product) {
     if (!(await confirm({ title: 'Excluir produto?', text: `“${p.name}” será removido. Encomendas antigas continuam como estão.`, confirmLabel: 'Excluir', danger: true }))) return
@@ -67,34 +75,64 @@ function ProductsTab() {
           />
         </div>
       ) : (
-        <div className="list">
-          {products.map((p) => {
-            const cost = computeCost(p, ingMap, settings.hourlyRate)
-            const price = sellingPrice(p, ingMap, settings)
-            const profit = computeProfit(price, cost.unitCost, settings.overheadPct, p.yield)
-            const pill = profit.realMarginPct >= p.marginPct - 1 ? 'good' : profit.realMarginPct >= 15 ? 'ok' : 'bad'
-            return (
-              <div className="item" key={p.id} style={{ cursor: 'default' }}>
-                <div className="emoji">{p.emoji}</div>
-                <div className="grow">
-                  <div className="title">{p.name}</div>
-                  <div className="small muted">Custo {formatBRL(cost.unitCost)} · rende {p.yield}</div>
-                  <span className={`margin-pill ${pill}`} style={{ marginTop: 4 }}>Lucro {formatPct(profit.realMarginPct)} · {formatBRL(profit.profitPerUnit)}/un</span>
-                </div>
-                <div className="right">
-                  <div className="amount">{formatBRL(price)}</div>
-                  <div className="tiny muted">cada</div>
-                </div>
-                <div className="row" style={{ gap: 2 }}>
-                  <button className="btn ghost icon-btn" aria-label={`Editar ${p.name}`} onClick={() => setEditing(p)}><Icon name="edit" /></button>
-                  <button className="btn ghost icon-btn" aria-label={`Excluir ${p.name}`} onClick={() => remove(p)}><Icon name="trash" /></button>
-                </div>
+        <>
+          {(() => {
+            const weak = products.filter((p) => productEconomics(p, ingMap, settings).health !== 'saudavel').length
+            return weak > 0 ? (
+              <div className="notice" style={{ marginBottom: 12 }}>
+                <span className="em">💡</span>
+                <div><b>{weak} {weak === 1 ? 'produto está' : 'produtos estão'} com lucro abaixo do ideal.</b>
+                  <div className="small">Veja a sugestão de preço em cada um e toque em “Usar” para corrigir.</div></div>
+              </div>
+            ) : (
+              <div className="notice info" style={{ marginBottom: 12 }}>
+                <span className="em">💎</span>
+                <div><b>Todos os seus preços estão com lucro saudável!</b><div className="small">Continue revisando quando o preço dos ingredientes mudar.</div></div>
               </div>
             )
-          })}
-        </div>
+          })()}
+          <div className="list">
+            {products.map((p) => {
+              const e = productEconomics(p, ingMap, settings)
+              const pill: Record<Health, string> = { saudavel: 'good', apertado: 'ok', critico: 'bad' }
+              const label: Record<Health, string> = { saudavel: 'Lucro saudável', apertado: 'Lucro apertado', critico: e.profitPerUnit <= 0 ? 'Prejuízo' : 'Lucro baixo' }
+              const canFix = e.health !== 'saudavel' && e.suggested != null && e.suggested > e.price + 0.004
+              return (
+                <div className="item col" key={p.id} style={{ cursor: 'default' }}>
+                  <div className="row" style={{ width: '100%', alignItems: 'center', gap: 12 }}>
+                    <div className="emoji">{p.emoji}</div>
+                    <div className="grow">
+                      <div className="title">{p.name}</div>
+                      <div className="small muted">Custo {formatBRL(e.unitCost)} · rende {p.yield}</div>
+                    </div>
+                    <div className="right">
+                      <div className="amount">{formatBRL(e.price)}</div>
+                      <div className="tiny muted">sobra {formatBRL(e.profitPerUnit)}</div>
+                    </div>
+                  </div>
+                  <div className="row spread wrap">
+                    <span className={`margin-pill ${pill[e.health]}`}>{label[e.health]} · {formatPct(e.realMarginPct)}</span>
+                    <div className="row" style={{ gap: 2 }}>
+                      <button className="btn ghost sm" aria-label={`Editar ${p.name}`} onClick={() => setEditing(p)}><Icon name="edit" /> Editar</button>
+                      <button className="btn ghost icon-btn" aria-label={`Excluir ${p.name}`} onClick={() => remove(p)}><Icon name="trash" /></button>
+                    </div>
+                  </div>
+                  {canFix && (
+                    <div className="suggest">
+                      <span>💡 Para um lucro saudável, cobre <b>{formatBRL(e.suggested!)}</b> <span className="muted">(preço mínimo: {formatBRL(e.minPrice)})</span></span>
+                      <button className="btn sm primary" onClick={async () => { await db.products.update(p.id!, { price: e.suggested! }); toast(`Preço do ${p.name} ajustado para ${formatBRL(e.suggested!)} ✓`) }}>Usar</button>
+                    </div>
+                  )}
+                  {e.profitPerHour != null && e.profitPerUnit > 0 && (
+                    <div className="tiny muted">⏱️ Rende {formatBRL(e.profitPerHour)} de lucro por hora de trabalho</div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </>
       )}
-      {editing && <ProductForm initial={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} />}
+      {editing && <ProductForm initial={editing === 'new' ? undefined : editing} onClose={closeForm} />}
     </>
   )
 }

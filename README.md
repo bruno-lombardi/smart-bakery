@@ -10,11 +10,28 @@ Painel simples e bonito para a produção e venda de pães artesanais: **precifi
 
 | Tela | Para quê |
 | --- | --- |
-| **Início** | Faturamento estimado do mês, nº de encomendas, ticket médio, recebido, a receber, saldo, lucro estimado, meta, próximas entregas, lista “o que assar”, gráfico dos últimos meses e produtos campeões. |
+| **Início** | Cartão da meta (anel de progresso, quantos pãezinhos faltam), jornada guiada para quem está começando, faturamento estimado, nº de encomendas, ticket médio, recebido, a receber, saldo, lucro estimado, dicas do painel, próximas entregas, lista “o que assar”, gráfico dos últimos meses e produtos campeões. |
+| **Metas** | Meta de lucro mensal, plano do mês (pães por dia/semana, encomendas), caminhos por produto, simulador “e se…?” (vender mais ou mudar preços), marcos de 25/50/75/100% e conquistas. |
 | **Encomendas** | Anotar pedidos (cliente, data/hora, retirada ou entrega, itens, desconto, sinal), avançar status (novo → em produção → pronto → entregue), receber pagamentos, chamar no WhatsApp. |
-| **Preços** | Cadastro de insumos e receitas. Calcula custo da fornada e de cada pão (ingredientes, embalagem, gás, mão de obra) e sugere o preço a partir do lucro desejado. |
+| **Preços** | Cadastro de insumos e receitas. Calcula custo da fornada e de cada pão (ingredientes, embalagem, gás, mão de obra), oferece 3 preços prontos (econômico, saudável, premium), mostra o preço mínimo, o lucro por hora de trabalho e avisa quando um produto está com lucro baixo, com botão “Usar” para corrigir. |
 | **Caixa** | Entradas e saídas por mês, categorias, saldo. Pagamentos de encomendas entram sozinhos. |
-| **Ajustes** | Valor da hora, lucro padrão, despesas gerais, meta, backup/restauração, instalação do app. |
+| **Ajustes** | Valor da hora, lucro padrão, despesas gerais, meta de lucro, backup/restauração, instalação do app. |
+
+### Primeiro acesso
+
+O app começa com uma conversa rápida: nome, **quanto de lucro ela quer por mês** (vira a meta) e quanto vale a hora de trabalho. Depois ela cadastra os pães e o painel passa a calcular quantos faltam para a meta.
+
+### Como a meta é calculada
+
+```
+lucro por pão     = preço − custo − despesas gerais (% do preço)
+lucro médio       = média dos lucros por pão, ponderada pelo que ela mais vende (ou igual, se ainda não há vendas)
+lucro garantido   = lucro das encomendas do mês (canceladas não contam)
+pães que faltam   = (meta − lucro garantido) ÷ lucro médio
+por dia           = pães que faltam ÷ dias restantes do mês
+```
+
+Marcos (25/50/75/100%) e conquistas são comemorados uma única vez, com mensagem e chuva de pãezinhos.
 
 ### Como o preço é calculado
 

@@ -3,7 +3,8 @@ import { db } from '../db/db'
 import { useIngredientMap, useIngredients, useSettings } from '../db/hooks'
 import type { Product, RecipeLine, Unit } from '../db/types'
 import { PRODUCT_CATEGORIES, PRODUCT_EMOJIS } from '../lib/categories'
-import { formatBRL, formatPct } from '../lib/money'
+import { formatBRL, formatNumber, formatPct } from '../lib/money'
+import { priceOptions } from '../lib/goals'
 import { computeCost, computeProfit, lineCost, suggestedPrice } from '../lib/pricing'
 import { UNIT_LABEL, compatibleUnits } from '../lib/units'
 import { Field, MoneyInput, NumberInput } from './Fields'
@@ -45,6 +46,11 @@ export function ProductForm({ initial, onClose }: { initial?: Product; onClose: 
   const profit = computeProfit(finalPrice, cost.unitCost, settings.overheadPct, yieldQty ?? 1)
   const target = margin ?? 0
   const pill = profit.realMarginPct >= target - 1 ? 'good' : profit.realMarginPct >= 15 ? 'ok' : 'bad'
+
+  const options = useMemo(() => priceOptions(cost.unitCost, settings), [cost.unitCost, settings])
+  const minPrice = cost.unitCost > 0 ? Math.ceil((cost.unitCost / (1 - Math.min(0.9, settings.overheadPct / 100))) * 100) / 100 : 0
+  const perMonthForGoal =
+    settings.monthlyProfitGoal > 0 && profit.profitPerUnit > 0 ? Math.ceil(settings.monthlyProfitGoal / profit.profitPerUnit) : null
 
   const valid = name.trim() !== '' && (yieldQty ?? 0) >= 1
   const updateLine = (i: number, patch: Partial<RecipeLine>) =>
@@ -172,6 +178,28 @@ export function ProductForm({ initial, onClose }: { initial?: Product; onClose: 
           </Field>
         </div>
 
+        {options.length > 0 && (
+          <div className="field">
+            <span className="label">Escolha um preço pronto</span>
+            <div className="price-options" role="radiogroup" aria-label="Opções de preço">
+              {options.map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={finalPrice === o.price}
+                  className={`opt${finalPrice === o.price ? ' on' : ''}`}
+                  onClick={() => { setPrice(o.price); setMargin(o.marginPct) }}
+                >
+                  <small>{o.label}</small>
+                  <b>{formatBRL(o.price)}</b>
+                  <small>sobra {formatBRL(o.profitPerUnit)}</small>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="price-box" aria-live="polite">
           <div className="row spread wrap">
             <div>
@@ -197,6 +225,12 @@ export function ProductForm({ initial, onClose }: { initial?: Product; onClose: 
                 ({formatBRL(profit.profitPerBatch)} na fornada)</span>
               <span className={`margin-pill ${pill}`}>Lucro real {formatPct(profit.realMarginPct)}</span>
             </div>
+          )}
+          {minPrice > 0 && (
+            <p className="small">🛑 Preço mínimo para não ter prejuízo: <b>{formatBRL(minPrice)}</b>{finalPrice > 0 && finalPrice < minPrice ? <b style={{ color: 'var(--red)' }}> — seu preço está abaixo!</b> : null}</p>
+          )}
+          {perMonthForGoal != null && (
+            <p className="small">🎯 Vendendo só este pão, você precisa de ~<b>{formatNumber(perMonthForGoal, 0)} por mês</b> (uns {formatNumber(Math.ceil(perMonthForGoal / 30), 0)} por dia) para bater sua meta de lucro.</p>
           )}
           <p className="hint">Já considerando {formatPct(settings.overheadPct)} do preço para despesas gerais (luz, internet, manutenção). Dá para mudar em Ajustes.</p>
         </div>

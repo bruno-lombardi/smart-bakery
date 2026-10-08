@@ -83,7 +83,7 @@ export function estimatedProfit(
   orders: Order[],
   products: Product[],
   ingredients: Map<number, Ingredient>,
-  s: Pick<Settings, 'hourlyRate' | 'overheadPct' | 'roundTo'>,
+  s: Pick<Settings, 'hourlyRate' | 'overheadPct' | 'roundTo' | 'defaultMarginPct'>,
 ): number {
   const byId = new Map(products.map((p) => [p.id!, p]))
   let profit = 0
@@ -91,9 +91,14 @@ export function estimatedProfit(
     if (!isActive(o) || monthKey(o.date) !== month) continue
     for (const i of o.items) {
       const p = i.productId != null ? byId.get(i.productId) : undefined
-      const unitCost = p ? computeCost(p, ingredients, s.hourlyRate).unitCost : 0
+      if (!p) {
+        // item avulso, sem receita: assume a margem padrão
+        profit += i.qty * i.unitPrice * (s.defaultMarginPct / 100)
+        continue
+      }
+      const unitCost = computeCost(p, ingredients, s.hourlyRate).unitCost
       const overhead = i.unitPrice * (s.overheadPct / 100)
-      profit += i.qty * (i.unitPrice - (p ? unitCost : 0) - overhead)
+      profit += i.qty * (i.unitPrice - unitCost - overhead)
     }
     profit += (o.deliveryFee || 0) - (o.discount || 0)
   }

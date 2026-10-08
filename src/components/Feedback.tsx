@@ -7,7 +7,11 @@ interface ConfirmOpts { title: string; text: string; confirmLabel?: string; dang
 interface Ctx {
   toast: (text: string, action?: ToastItem['action'], ms?: number) => void
   confirm: (opts: ConfirmOpts) => Promise<boolean>
+  /** Chuva de pãezinhos para comemorar 🎉 */
+  celebrate: () => void
 }
+
+const CONFETTI = ['🍞', '🥖', '🥐', '✨', '💛', '🥯']
 
 const FeedbackCtx = createContext<Ctx | null>(null)
 
@@ -20,6 +24,7 @@ export function useFeedback() {
 export function FeedbackProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [dialog, setDialog] = useState<(ConfirmOpts & { resolve: (v: boolean) => void }) | null>(null)
+  const [burst, setBurst] = useState<number | null>(null)
   const nextId = useRef(1)
 
   const toast = useCallback<Ctx['toast']>((text, action, ms = 3800) => {
@@ -30,7 +35,13 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
 
   const confirm = useCallback<Ctx['confirm']>((opts) => new Promise((resolve) => setDialog({ ...opts, resolve })), [])
 
-  const value = useMemo(() => ({ toast, confirm }), [toast, confirm])
+  const celebrate = useCallback(() => {
+    const id = Date.now()
+    setBurst(id)
+    setTimeout(() => setBurst((b) => (b === id ? null : b)), 4600)
+  }, [])
+
+  const value = useMemo(() => ({ toast, confirm, celebrate }), [toast, confirm, celebrate])
 
   const close = (v: boolean) => {
     dialog?.resolve(v)
@@ -40,6 +51,23 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
   return (
     <FeedbackCtx.Provider value={value}>
       {children}
+      {burst != null && (
+        <div className="confetti" aria-hidden="true" key={burst}>
+          {Array.from({ length: 34 }, (_, i) => (
+            <span
+              key={i}
+              style={{
+                left: `${(i * 29) % 100}%`,
+                animationDelay: `${((i * 37) % 14) / 10}s`,
+                animationDuration: `${2.6 + ((i * 13) % 12) / 10}s`,
+                fontSize: `${1.3 + ((i * 7) % 10) / 10}rem`,
+              }}
+            >
+              {CONFETTI[i % CONFETTI.length]}
+            </span>
+          ))}
+        </div>
+      )}
       <div className="toasts" aria-live="polite">
         {toasts.map((t) => (
           <div className="toast" key={t.id}>

@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { BunArt } from '../components/Brand'
 import { MonthlyChart, HBars } from '../components/Charts'
 import { useFeedback } from '../components/Feedback'
+import { GoalCard } from '../components/GoalCard'
 import { Icon } from '../components/Icon'
 import { OrderCard } from '../components/OrderCard'
 import { OrderForm } from '../components/OrderForm'
@@ -10,9 +11,10 @@ import { PaymentForm } from '../components/PaymentForm'
 import { TransactionForm } from '../components/TransactionForm'
 import { loadExamples } from '../db/seed'
 import { useIngredientMap, useOrders, useProducts, useSettings, useTransactions } from '../db/hooks'
+import { useIntel } from '../db/useIntel'
 import type { Order } from '../db/types'
 import { addDays, currentMonthKey, formatLongDay, greeting, monthLabel, todayISO } from '../lib/dates'
-import { formatBRL, formatBRLShort } from '../lib/money'
+import { formatBRL } from '../lib/money'
 import { productionList } from '../lib/orders'
 import { estimatedProfit, lastMonths, monthStats, topProducts } from '../lib/stats'
 
@@ -33,7 +35,7 @@ export default function Dashboard() {
   const products = useProducts()
   const ingMap = useIngredientMap()
   const settings = useSettings()
-  const navigate = useNavigate()
+  const intel = useIntel()
   const { toast } = useFeedback()
   const [range, setRange] = useState<Range>('hoje')
   const [editing, setEditing] = useState<Order | 'new' | null>(null)
@@ -66,7 +68,6 @@ export default function Dashboard() {
   const empty = orders.length === 0 && products.length === 0 && txs.length === 0
   const lastBackupDays = settings.lastBackupAt ? Math.floor((Date.now() - settings.lastBackupAt) / 86_400_000) : null
   const needsBackup = !empty && (lastBackupDays == null || lastBackupDays >= 14)
-  const goalPct = settings.monthlyGoal > 0 ? Math.min(100, (stats.revenue / settings.monthlyGoal) * 100) : 0
   const firstName = settings.ownerName.split(' ')[0]
 
   return (
@@ -84,19 +85,28 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {empty && (
+      {intel && <GoalCard plan={intel.plan} name={firstName} />}
+
+      {!(products.length > 0 && orders.length > 0 && ingMap.size > 0) && (
         <section className="card">
-          <h2>Vamos começar? 🥖</h2>
-          <p className="muted" style={{ margin: '6px 0 14px' }}>Em poucos passinhos o painel já ajuda no seu dia a dia:</p>
-          <ol className="stack" style={{ gap: 10, paddingLeft: 20, margin: 0 }}>
-            <li><b>Cadastre seus insumos</b> (farinha, fermento…) e <b>monte a receita</b> de cada pão em <Link to="/produtos">Preços</Link>.</li>
-            <li><b>Anote as encomendas</b> em <Link to="/encomendas">Encomendas</Link>.</li>
-            <li><b>Registre o que entra e sai</b> no <Link to="/caixa">Caixa</Link>.</li>
+          <h2>Seu caminho até a meta 🥖</h2>
+          <p className="muted" style={{ margin: '6px 0 12px' }}>Pequenos passos, um de cada vez. Eu acompanho você!</p>
+          <ol className="journey">
+            {[
+              { done: settings.monthlyProfitGoal > 0, label: 'Definir a meta de lucro', to: '/metas' },
+              { done: ingMap.size > 0, label: 'Cadastrar os insumos (farinha, fermento…)', to: '/produtos' },
+              { done: products.length > 0, label: 'Montar a receita e ver o preço sugerido', to: '/produtos?novo=1' },
+              { done: orders.length > 0, label: 'Anotar a primeira encomenda', to: '/encomendas?nova=1' },
+            ].map((st) => (
+              <li key={st.label} className={st.done ? 'done' : ''}>
+                <span className="tick">{st.done ? '✓' : ''}</span>
+                {st.done ? <span>{st.label}</span> : <Link to={st.to} className="bold">{st.label}</Link>}
+              </li>
+            ))}
           </ol>
-          <div className="row wrap" style={{ marginTop: 16 }}>
-            <button className="btn primary" onClick={() => navigate('/produtos')}>Começar pelos preços</button>
-            <button className="btn" onClick={async () => { await loadExamples(); toast('Exemplos carregados! Pode explorar e depois apagar 🍞') }}>Ver com exemplos prontos</button>
-          </div>
+          {empty && (
+            <button className="btn sm" style={{ marginTop: 12 }} onClick={async () => { await loadExamples(); toast('Exemplos carregados! Pode explorar e depois apagar 🍞') }}>Ver com exemplos prontos</button>
+          )}
         </section>
       )}
 
@@ -131,13 +141,6 @@ export default function Dashboard() {
             </div>
             <p className="small muted" style={{ maxWidth: 320 }}>Calculado com o custo atual dos seus produtos, já descontando as despesas gerais.</p>
           </div>
-          {settings.monthlyGoal > 0 && (
-            <div style={{ marginTop: 12 }}>
-              <div className="row spread small bold"><span>Meta do mês: {formatBRLShort(settings.monthlyGoal)}</span><span>{Math.round(goalPct)}%</span></div>
-              <div className="progress" style={{ marginTop: 6 }}><div style={{ width: `${goalPct}%` }} /></div>
-              {goalPct >= 100 && <p className="small bold" style={{ color: 'var(--green)', marginTop: 6 }}>Meta batida! Parabéns, {firstName}! 🎉</p>}
-            </div>
-          )}
         </div>
       </section>
 
@@ -160,6 +163,23 @@ export default function Dashboard() {
         </section>
 
         <div className="stack">
+          {intel && intel.insights.length > 0 && (
+            <section>
+              <div className="section-title" style={{ marginTop: 0 }}><h2>Dicas para você 💡</h2></div>
+              <div className="stack" style={{ gap: 10 }}>
+                {intel.insights.slice(0, 3).map((i) => (
+                  <div key={i.id} className={`notice tip ${i.tone}`}>
+                    <span className="em">{i.emoji}</span>
+                    <div className="grow">
+                      <b>{i.title}</b>
+                      <div className="small">{i.text}</div>
+                      {i.to && <Link to={i.to} className="bold small">{i.cta ?? 'Ver'} →</Link>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
           <section>
             <div className="section-title" style={{ marginTop: 0 }}><h2>O que assar 🔥</h2></div>
             <div className="card">

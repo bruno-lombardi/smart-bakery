@@ -90,10 +90,13 @@ export interface Settings {
   defaultMarginPct: number
   /** Despesas gerais rateadas no preço (% do preço) */
   overheadPct: number
-  monthlyGoal: number
+  /** Meta de lucro líquido por mês (R$) */
+  monthlyProfitGoal: number
   roundTo: number
   lastBackupAt: number | null
   onboarded: boolean
+  /** Marcos e conquistas já comemorados. null = ainda não inicializado */
+  celebrated: string[] | null
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -103,8 +106,9 @@ export const DEFAULT_SETTINGS: Settings = {
   hourlyRate: 15,
   defaultMarginPct: 40,
   overheadPct: 8,
-  monthlyGoal: 0,
+  monthlyProfitGoal: 0,
   roundTo: 0.5,
   lastBackupAt: null,
   onboarded: false,
+  celebrated: null,
 }

@@ -18,3 +18,9 @@ export function useSettings(): Settings {
   const s = useLiveQuery(() => db.settings.get('main'), [])
   return useMemo(() => ({ ...DEFAULT_SETTINGS, ...s }), [s])
 }
+
+/** undefined enquanto o banco carrega; depois sempre um objeto (mesmo sem registro salvo). */
+export function useSettingsLoaded(): Settings | undefined {
+  const r = useLiveQuery(async () => ({ s: await db.settings.get('main') }), [])
+  return useMemo(() => (r ? { ...DEFAULT_SETTINGS, ...r.s } : undefined), [r])
+}
