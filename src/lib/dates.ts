@@ -58,3 +58,15 @@ export function greeting(hour = new Date().getHours()): string {
   if (hour < 18) return 'Boa tarde'
   return 'Boa noite'
 }
+
+const timeFmt = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' })
+/** “hoje às 14:32”, “ontem às 09:10”, “12/10 às 18:00” */
+export function formatWhen(ts: number): string {
+  const d = new Date(ts)
+  const iso = toISODate(d)
+  const t = timeFmt.format(d)
+  const today = todayISO()
+  if (iso === today) return `hoje às ${t}`
+  if (iso === addDays(today, -1)) return `ontem às ${t}`
+  return `${formatShortDate(iso)} às ${t}`
+}

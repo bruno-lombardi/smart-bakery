@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { db, requestPersistentStorage, saveSettings } from '../db/db'
-import { downloadBackup, restoreBackup, wipeAll } from '../db/backup'
+import { wipeAll } from '../db/backup'
+import { BackupCard } from '../backup/BackupCard'
 import { loadStarterCatalog } from '../db/seed'
 import { useSettings } from '../db/hooks'
 import { Field, MoneyInput, NumberInput } from '../components/Fields'
@@ -14,7 +15,6 @@ interface InstallEvent extends Event {
 export default function SettingsPage() {
   const s = useSettings()
   const { toast, confirm } = useFeedback()
-  const fileRef = useRef<HTMLInputElement>(null)
   const [persisted, setPersisted] = useState<boolean | null>(null)
   const [usage, setUsage] = useState<string>('')
   const [installEvent, setInstallEvent] = useState<InstallEvent | null>(null)
@@ -55,27 +55,18 @@ export default function SettingsPage() {
     toast('Ajustes salvos ✓')
   }
 
-  async function onRestore(file: File) {
-    if (!(await confirm({ title: 'Restaurar backup?', text: 'Isso substitui TODOS os dados atuais pelos do arquivo.', confirmLabel: 'Restaurar', danger: true }))) return
-    try {
-      await restoreBackup(file)
-      toast('Backup restaurado! 🎉')
-    } catch (e) {
-      toast(e instanceof Error ? e.message : 'Não foi possível restaurar.')
-    }
-  }
-
   async function onWipe() {
     if (!(await confirm({ title: 'Apagar tudo?', text: 'Todos os produtos, encomendas e lançamentos serão apagados deste aparelho. Isso não pode ser desfeito. Já fez o backup?', confirmLabel: 'Apagar tudo', danger: true }))) return
     await wipeAll()
     toast('Tudo limpo. Recomeçando! 🌱')
   }
 
-  const lastBackup = s.lastBackupAt ? new Date(s.lastBackupAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' }) : 'nunca'
 
   return (
     <div className="stack">
       <div className="page-head"><div><h1>Ajustes</h1><p>Deixe o painel do jeitinho da sua padaria.</p></div></div>
+
+      <BackupCard />
 
       <section className="card stack">
         <h2>Sua padaria</h2>
@@ -97,17 +88,6 @@ export default function SettingsPage() {
         </div>
         <Field label="Meta de lucro do mês" htmlFor="s-goal" hint="O que sobra depois de todos os custos. Você acompanha em Metas."><MoneyInput id="s-goal" value={goal} onChange={setGoal} /></Field>
         <button className="btn primary" disabled={!loaded} onClick={saveAll} style={{ alignSelf: 'flex-start' }}><Icon name="check" /> Salvar ajustes</button>
-      </section>
-
-      <section className="card stack">
-        <h2>Cópia de segurança 💾</h2>
-        <p className="muted">Seus dados ficam guardados <b>só neste aparelho</b>. Se trocar de celular ou limpar o navegador, eles somem. Por isso, baixe uma cópia de vez em quando e guarde no WhatsApp, e-mail ou Google Drive.</p>
-        <p className="small bold">Último backup: {lastBackup}</p>
-        <div className="row wrap">
-          <button className="btn primary" onClick={async () => { await downloadBackup(); toast('Backup baixado! Guarde em um lugar seguro 💛') }}><Icon name="download" /> Baixar backup</button>
-          <button className="btn" onClick={() => fileRef.current?.click()}><Icon name="upload" /> Restaurar de um arquivo</button>
-          <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void onRestore(f); e.target.value = '' }} />
-        </div>
       </section>
 
       <section className="card stack">

@@ -55,15 +55,25 @@ export function validateBackup(raw: unknown): BackupFile {
   return b
 }
 
-export async function restoreBackup(file: File) {
-  const text = await file.text()
+export function parseBackup(text: string): BackupFile {
   let parsed: unknown
   try {
     parsed = JSON.parse(text)
   } catch {
     throw new Error('Não consegui ler este arquivo.')
   }
-  const b = validateBackup(parsed)
+  return validateBackup(parsed)
+}
+
+export async function restoreBackup(file: File) {
+  await applyBackup(parseBackup(await file.text()))
+}
+
+export function backupCounts(b: BackupFile) {
+  return { products: b.data.products.length, orders: b.data.orders.length, transactions: b.data.transactions.length }
+}
+
+export async function applyBackup(b: BackupFile) {
   await db.transaction('rw', [db.ingredients, db.products, db.orders, db.transactions, db.settings], async () => {
     await Promise.all([db.ingredients.clear(), db.products.clear(), db.orders.clear(), db.transactions.clear(), db.settings.clear()])
     await db.ingredients.bulkPut(b.data.ingredients as never[])

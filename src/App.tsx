@@ -10,6 +10,8 @@ import Products from './pages/Products'
 import Cashflow from './pages/Cashflow'
 import SettingsPage from './pages/Settings'
 import Goals from './pages/Goals'
+import { AutoBackup } from './backup/AutoBackup'
+import { BackupBanner } from './backup/BackupBanner'
 import { BunArt } from './components/Brand'
 import { MilestoneWatcher } from './components/MilestoneWatcher'
 import { Onboarding } from './components/Onboarding'
@@ -75,6 +77,7 @@ export default function App() {
       </aside>
       <main className="main">
         <header className="topbar"><BrandLockup /></header>
+        <BackupBanner />
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/encomendas" element={<Orders />} />
@@ -88,6 +91,7 @@ export default function App() {
       <nav className="bottomnav" aria-label="Menu principal"><NavLinks /></nav>
       <PwaStatus />
       <MilestoneWatcher />
+      <AutoBackup />
     </div>
   )
 }

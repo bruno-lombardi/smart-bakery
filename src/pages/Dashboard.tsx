@@ -12,6 +12,8 @@ import { TransactionForm } from '../components/TransactionForm'
 import { loadStarterCatalog } from '../db/seed'
 import { useIngredientMap, useOrders, useProducts, useSettings, useTransactions } from '../db/hooks'
 import { useIntel } from '../db/useIntel'
+import { useBackupState } from '../backup/hooks'
+import { driveConfigured } from '../backup'
 import type { Order } from '../db/types'
 import { addDays, currentMonthKey, formatLongDay, greeting, monthLabel, todayISO } from '../lib/dates'
 import { formatBRL } from '../lib/money'
@@ -36,6 +38,7 @@ export default function Dashboard() {
   const ingMap = useIngredientMap()
   const settings = useSettings()
   const intel = useIntel()
+  const backup = useBackupState()
   const { toast } = useFeedback()
   const [range, setRange] = useState<Range>('hoje')
   const [editing, setEditing] = useState<Order | 'new' | null>(null)
@@ -67,7 +70,8 @@ export default function Dashboard() {
 
   const empty = orders.length === 0 && products.length === 0 && txs.length === 0
   const lastBackupDays = settings.lastBackupAt ? Math.floor((Date.now() - settings.lastBackupAt) / 86_400_000) : null
-  const needsBackup = !empty && (lastBackupDays == null || lastBackupDays >= 14)
+  const autoProtected = (['drive', 'folder'] as const).some((id) => backup[id].enabled && backup[id].lastSuccessAt != null && Date.now() - backup[id].lastSuccessAt! < 7 * 86_400_000)
+  const needsBackup = !empty && !autoProtected && (lastBackupDays == null || lastBackupDays >= 14)
   const firstName = settings.ownerName.split(' ')[0]
 
   return (
@@ -116,7 +120,7 @@ export default function Dashboard() {
           <div className="grow">
             <b>Hora de guardar uma cópia de segurança.</b>
             <div className="small">Seus dados ficam só neste aparelho. {lastBackupDays == null ? 'Você ainda não fez nenhum backup.' : `O último backup foi há ${lastBackupDays} dias.`}</div>
-            <Link to="/ajustes" className="bold small">Fazer backup agora →</Link>
+            <Link to="/ajustes" className="bold small">{driveConfigured ? 'Ligar o backup automático →' : 'Fazer backup agora →'}</Link>
           </div>
         </div>
       )}

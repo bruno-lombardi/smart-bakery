@@ -4,7 +4,7 @@ Painel simples e bonito para a produção e venda de pães artesanais: **precifi
 
 - **Funciona sem internet** (PWA instalável no celular ou computador).
 - **Os dados ficam só no aparelho** (IndexedDB). Não existe servidor, conta ou custo.
-- **Backup** em arquivo `.json` (Ajustes → Baixar backup).
+- **Backup em camadas**: Google Drive automático (opcional), pasta do computador e arquivo manual. Veja [`docs/BACKUP-GOOGLE-DRIVE.md`](docs/BACKUP-GOOGLE-DRIVE.md).
 
 ## O que tem
 
@@ -63,6 +63,10 @@ Depois da primeira visita, tudo funciona offline. Quando você publicar uma vers
 
 > Outro endereço (Cloudflare Pages, Netlify)? Gere o build com `BASE_PATH=/ npm run build` e publique a pasta `dist/`.
 
+### Backup automático (Google Drive)
+
+Com o ID do app no Google Cloud configurado (`VITE_GOOGLE_CLIENT_ID`, passo a passo em [`docs/BACKUP-GOOGLE-DRIVE.md`](docs/BACKUP-GOOGLE-DRIVE.md)), o painel salva sozinho um arquivo por dia na pasta “Pães & Afeto – Backups” do Drive dela (permissão `drive.file`: o app só vê o que ele mesmo criou; guarda 30 dias; só envia se algo mudou). Se o Google pedir login de novo, o backup fica pendente e, depois de 1 dia, aparece um aviso com um botão “Salvar agora”. Sem o ID configurado, o cartão do Drive não aparece.
+
 ### Cuidados com os dados locais
 
 - Os dados vivem no navegador **daquele aparelho**: trocar de celular ou limpar os dados do navegador apaga tudo. O painel lembra de fazer backup a cada 14 dias.
@@ -80,4 +84,4 @@ npm run build && npm run preview
 
 Stack: Vite · React · TypeScript · Dexie (IndexedDB) · vite-plugin-pwa (Workbox) · HashRouter (funciona em qualquer hospedagem estática, inclusive offline).
 
-Estrutura: `src/lib` (regras puras e testadas) · `src/db` (banco, backup, ações) · `src/components` · `src/pages`.
+Estrutura: `src/lib` (regras puras e testadas) · `src/db` (banco, catálogo, ações) · `src/backup` (motor de backup, Drive, pasta, compartilhar) · `src/components` · `src/pages`.
