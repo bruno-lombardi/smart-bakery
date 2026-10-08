@@ -61,8 +61,8 @@ export function computeAchievements({ settings, products, econs, orders, txs, to
 
   const defs: [string, string, string, string, boolean][] = [
     ['goal_set', '🎯', 'Sonhar grande', 'Definiu a meta de lucro do mês', settings.monthlyProfitGoal > 0],
-    ['first_product', '📖', 'Receita na mão', 'Cadastrou o primeiro produto', products.length > 0],
-    ['healthy_prices', '💎', 'Preço de quem sabe', '3 ou mais produtos com lucro saudável', econs.length >= 3 && econs.every((e) => e.health === 'saudavel')],
+    ['first_product', '📖', 'Receita na mão', 'Conferiu ou cadastrou o primeiro produto', products.some((p) => !p.estimated)],
+    ['healthy_prices', '💎', 'Preço de quem sabe', '3 ou mais produtos com lucro saudável', econs.length >= 3 && econs.every((e) => e.health === 'saudavel' && !e.product.estimated)],
     ['first_order', '📋', 'Primeira encomenda', 'Anotou a primeira encomenda', active.length > 0],
     ['first_delivery', '🛵', 'Entrega com carinho', 'Entregou a primeira encomenda', active.some((o) => o.status === 'entregue')],
     ['orders_10', '🥖', 'Forno aceso', '10 encomendas anotadas', active.length >= 10],

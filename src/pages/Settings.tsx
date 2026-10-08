@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { db, requestPersistentStorage, saveSettings } from '../db/db'
 import { downloadBackup, restoreBackup, wipeAll } from '../db/backup'
-import { loadExamples } from '../db/seed'
+import { loadStarterCatalog } from '../db/seed'
 import { useSettings } from '../db/hooks'
 import { Field, MoneyInput, NumberInput } from '../components/Fields'
 import { useFeedback } from '../components/Feedback'
@@ -132,7 +132,7 @@ export default function SettingsPage() {
       <section className="card stack">
         <h2>Outras opções</h2>
         <div className="row wrap">
-          <button className="btn" onClick={async () => { if (await db.products.count()) { toast('Você já tem produtos cadastrados.'); return } await loadExamples(); toast('Exemplos carregados 🍞') }}>Carregar exemplos</button>
+          <button className="btn" onClick={async () => { await loadStarterCatalog(); toast('Cardápio inicial conferido: só entrou o que faltava 🍞') }}>Recarregar cardápio inicial</button>
           <button className="btn danger" onClick={onWipe}><Icon name="trash" /> Apagar todos os dados</button>
         </div>
       </section>

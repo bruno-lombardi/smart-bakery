@@ -9,5 +9,9 @@ export const EXPENSE_CATEGORIES = [
   'Outras saídas',
 ]
 export const PAYMENT_METHODS = ['Pix', 'Dinheiro', 'Cartão', 'Transferência']
-export const PRODUCT_CATEGORIES = ['Pães doces', 'Pães salgados', 'Recheados', 'Integrais', 'Outros']
-export const PRODUCT_EMOJIS = ['🥖', '🍞', '🥐', '🥯', '🥨', '🧀', '🍯', '🌾', '🫓', '🥪', '🍩', '🥧']
+export const PRODUCT_CATEGORIES = ['Pães de forma', 'Salgados', 'Doces que abraçam', 'Pães doces', 'Pães salgados', 'Outros']
+/** Emojis comuns + ícones próprios da marca (prefixo svg:) */
+export const PRODUCT_EMOJIS = [
+  '🍞', '🥖', '🥐', '🥯', '🥨', '🥪', '🫓', '🥧', '🧀', '🥔', '🌾', 'svg:sem-gluten',
+  'svg:rosca', 'svg:bolo', '🍰', '🧁', '🍩', '🥥', '🍗', '🌽', '🍫', '🍓', '🍋', '🥕', '🍪', '🥜', '🍯',
+]

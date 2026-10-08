@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { saveSettings } from '../db/db'
-import { loadExamples } from '../db/seed'
+import { loadStarterCatalog } from '../db/seed'
 import { formatBRL, formatBRLShort } from '../lib/money'
 import { BunArt } from './Brand'
 import { MoneyInput } from './Fields'
@@ -19,7 +19,7 @@ export function Onboarding({ initialName }: { initialName: string }) {
   const [hour, setHour] = useState<number | null>(15)
   const first = name.trim().split(' ')[0] || 'amiga'
 
-  async function finish(dest: 'produto' | 'exemplos' | 'explorar') {
+  async function finish(dest: 'revisar' | 'inicio') {
     await saveSettings({
       ownerName: name.trim() || 'Ana Paula',
       monthlyProfitGoal: goal ?? 0,
@@ -27,9 +27,8 @@ export function Onboarding({ initialName }: { initialName: string }) {
       onboarded: true,
       celebrated: null,
     })
-    if (dest === 'exemplos') await loadExamples()
-    if (dest === 'produto') navigate('/produtos?novo=1')
-    else navigate('/')
+    await loadStarterCatalog()
+    navigate(dest === 'revisar' ? '/produtos?aba=insumos' : '/')
   }
 
   const next = () => setStep((s) => Math.min(STEPS - 1, s + 1))
@@ -96,10 +95,9 @@ export function Onboarding({ initialName }: { initialName: string }) {
             <BunArt className="onboard-art" steam={false} />
             <h1>Tudo pronto, {first}! 🎉</h1>
             <p className="lead">Sua meta: <b style={{ color: 'var(--red)' }}>{formatBRL(goal ?? 0)}</b> de lucro por mês.</p>
-            <p className="muted">Agora vamos cadastrar seus pães e preços. Com eles eu calculo o caminho exato e te acompanho a cada encomenda.</p>
-            <button className="btn primary block" onClick={() => void finish('produto')}>Cadastrar meu primeiro pão</button>
-            <button className="btn block" onClick={() => void finish('exemplos')}>Ver com exemplos prontos</button>
-            <button className="btn ghost block sm" onClick={() => void finish('explorar')}>Explorar sozinha</button>
+            <p className="muted">Já deixei o <b>seu cardápio cadastrado</b>, com custos estimados e preços calculados para dar lucro saudável. Você só precisa ajustar o que for diferente na sua cozinha.</p>
+            <button className="btn primary block" onClick={() => void finish('revisar')}>Conferir meus custos e preços</button>
+            <button className="btn ghost block sm" onClick={() => void finish('inicio')}>Ir para o início</button>
           </div>
         )}
 

@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from './db'
 import { buildBackup, restoreBackup, validateBackup, wipeAll } from './backup'
-import { loadExamples } from './seed'
+import { loadStarterCatalog } from './seed'
 
 beforeEach(async () => {
   await wipeAll()
@@ -10,9 +10,9 @@ beforeEach(async () => {
 
 describe('backup', () => {
   it('exporta e restaura todos os dados', async () => {
-    await loadExamples()
+    await loadStarterCatalog()
     const before = await buildBackup()
-    expect(before.data.products.length).toBe(3)
+    expect(before.data.products.length).toBe(7)
 
     const file = new File([JSON.stringify(before)], 'b.json')
     await wipeAll()

@@ -11,6 +11,7 @@ import { Field, MoneyInput, Stepper } from './Fields'
 import { useFeedback } from './Feedback'
 import { Icon } from './Icon'
 import { Modal } from './Modal'
+import { ProductIcon } from './ProductIcon'
 
 export function OrderForm({ initial, onClose }: { initial?: Order; onClose: () => void }) {
   const { toast } = useFeedback()
@@ -138,7 +139,7 @@ export function OrderForm({ initial, onClose }: { initial?: Order; onClose: () =
           <div className="chips" style={{ flexWrap: 'wrap', overflow: 'visible' }}>
             {products.map((p) => (
               <button key={p.id} type="button" className="chip" onClick={() => addProduct(p.id!)}>
-                {p.emoji} {p.name} · {formatBRL(sellingPrice(p, ingMap, settings))}
+                <ProductIcon icon={p.emoji} /> {p.name} · {formatBRL(sellingPrice(p, ingMap, settings))}
               </button>
             ))}
           </div>

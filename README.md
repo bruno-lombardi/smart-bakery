@@ -21,6 +21,10 @@ Painel simples e bonito para a produção e venda de pães artesanais: **precifi
 
 O app começa com uma conversa rápida: nome, **quanto de lucro ela quer por mês** (vira a meta) e quanto vale a hora de trabalho. Depois ela cadastra os pães e o painel passa a calcular quantos faltam para a meta.
 
+### Cardápio inicial já cadastrado
+
+Ao terminar o onboarding, o app cadastra o cardápio da Ana Paula (pães de forma tradicional, integral multigrãos, zero glúten e de batata, torta de frango, rosca de coco e bolos gelados) com **insumos e receitas estimados** e **preços calculados para ~40% de lucro real**, usando a hora de trabalho e a margem que ela informou. Tudo vem marcado como *Estimativa*; ela confere os preços dos insumos, toca em “Está certo” (ou edita) e a marca some. Os dados ficam em `src/db/catalog.ts` e os valores são de referência de mercado, não de um fornecedor específico.
+
 ### Como a meta é calculada
 
 ```

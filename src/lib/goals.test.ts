@@ -168,3 +168,22 @@ describe('conquistas', () => {
     expect(on).toEqual(new Set(['goal_set', 'first_product', 'first_order', 'first_delivery', 'goal_50']))
   })
 })
+
+describe('catálogo inicial x conquistas', () => {
+  it('produtos ainda estimados não destravam conquistas de cadastro/preço', () => {
+    const mk = (n: number) => bun({ id: n, name: `P${n}`, estimated: true })
+    const products = [mk(1), mk(2), mk(3)]
+    const econs = products.map((p) => productEconomics(p, ing, settings))
+    const input = { settings: { monthlyProfitGoal: 100, lastBackupAt: null, celebrated: [] as string[] }, products, econs, orders: [], txs: [], today: '2026-10-10' }
+    const before = new Set(computeAchievements(input).filter((a) => a.unlocked).map((a) => a.id))
+    expect(before.has('first_product')).toBe(false)
+    expect(before.has('healthy_prices')).toBe(false)
+    const reviewed = products.map((p) => ({ ...p, estimated: false }))
+    const after = new Set(
+      computeAchievements({ ...input, products: reviewed, econs: reviewed.map((p) => productEconomics(p, ing, settings)) })
+        .filter((a) => a.unlocked).map((a) => a.id),
+    )
+    expect(after.has('first_product')).toBe(true)
+    expect(after.has('healthy_prices')).toBe(true)
+  })
+})

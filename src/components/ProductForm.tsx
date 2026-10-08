@@ -12,6 +12,7 @@ import { useFeedback } from './Feedback'
 import { Icon } from './Icon'
 import { IngredientForm } from './IngredientForm'
 import { Modal } from './Modal'
+import { ProductIcon } from './ProductIcon'
 
 export function ProductForm({ initial, onClose }: { initial?: Product; onClose: () => void }) {
   const { toast } = useFeedback()
@@ -22,6 +23,7 @@ export function ProductForm({ initial, onClose }: { initial?: Product; onClose: 
   const [name, setName] = useState(initial?.name ?? '')
   const [emoji, setEmoji] = useState(initial?.emoji ?? '🍞')
   const [category, setCategory] = useState(initial?.category ?? PRODUCT_CATEGORIES[0])
+  const [note, setNote] = useState(initial?.note ?? '')
   const [yieldQty, setYieldQty] = useState<number | null>(initial?.yield ?? null)
   const [recipe, setRecipe] = useState<RecipeLine[]>(initial?.recipe ?? [])
   const [packaging, setPackaging] = useState<number | null>(initial?.packagingPerUnit ?? 0)
@@ -35,9 +37,9 @@ export function ProductForm({ initial, onClose }: { initial?: Product; onClose: 
     () => ({
       name, emoji, category, yield: yieldQty ?? 0, recipe,
       packagingPerUnit: packaging ?? 0, extraPerBatch: extra ?? 0, laborMinutes: minutes ?? 0,
-      marginPct: margin ?? 0, price, active: initial?.active ?? true,
+      marginPct: margin ?? 0, price, active: initial?.active ?? true, note: note.trim() || undefined,
     }),
-    [name, emoji, category, yieldQty, recipe, packaging, extra, minutes, margin, price, initial?.active],
+    [name, emoji, category, yieldQty, recipe, packaging, extra, minutes, margin, price, initial?.active, note],
   )
 
   const cost = computeCost(draft, ingMap, settings.hourlyRate)
@@ -107,11 +109,14 @@ export function ProductForm({ initial, onClose }: { initial?: Product; onClose: 
             </select>
           </Field>
         </div>
+        <Field label="Observação (opcional)" htmlFor="p-note" hint="Ex.: tamanho, peso, vendido por fatia…">
+          <input id="p-note" className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ex.: pão de 500 g" />
+        </Field>
         <div className="field">
           <span className="label">Um desenhinho para reconhecer</span>
-          <div className="chips" role="radiogroup" aria-label="Emoji">
+          <div className="chips wrap-chips" role="radiogroup" aria-label="Ícone do produto">
             {PRODUCT_EMOJIS.map((e) => (
-              <button key={e} type="button" className={`chip${emoji === e ? ' on' : ''}`} onClick={() => setEmoji(e)} style={{ fontSize: '1.4rem', padding: '0 12px' }}>{e}</button>
+              <button key={e} type="button" role="radio" aria-checked={emoji === e} className={`chip icon-chip${emoji === e ? ' on' : ''}`} onClick={() => setEmoji(e)}><ProductIcon icon={e} /></button>
             ))}
           </div>
         </div>

@@ -9,7 +9,7 @@ import { OrderCard } from '../components/OrderCard'
 import { OrderForm } from '../components/OrderForm'
 import { PaymentForm } from '../components/PaymentForm'
 import { TransactionForm } from '../components/TransactionForm'
-import { loadExamples } from '../db/seed'
+import { loadStarterCatalog } from '../db/seed'
 import { useIngredientMap, useOrders, useProducts, useSettings, useTransactions } from '../db/hooks'
 import { useIntel } from '../db/useIntel'
 import type { Order } from '../db/types'
@@ -87,15 +87,15 @@ export default function Dashboard() {
 
       {intel && <GoalCard plan={intel.plan} name={firstName} />}
 
-      {!(products.length > 0 && orders.length > 0 && ingMap.size > 0) && (
+      {!(orders.length > 0 && products.length > 0 && !products.some((p) => p.estimated) && ![...ingMap.values()].some((i) => i.estimated)) && (
         <section className="card">
           <h2>Seu caminho até a meta 🥖</h2>
           <p className="muted" style={{ margin: '6px 0 12px' }}>Pequenos passos, um de cada vez. Eu acompanho você!</p>
           <ol className="journey">
             {[
               { done: settings.monthlyProfitGoal > 0, label: 'Definir a meta de lucro', to: '/metas' },
-              { done: ingMap.size > 0, label: 'Cadastrar os insumos (farinha, fermento…)', to: '/produtos' },
-              { done: products.length > 0, label: 'Montar a receita e ver o preço sugerido', to: '/produtos?novo=1' },
+              { done: ingMap.size > 0 && ![...ingMap.values()].some((i) => i.estimated), label: 'Conferir o preço dos seus insumos', to: '/produtos?aba=insumos' },
+              { done: products.length > 0 && !products.some((p) => p.estimated), label: 'Revisar custos e preços de cada produto', to: '/produtos' },
               { done: orders.length > 0, label: 'Anotar a primeira encomenda', to: '/encomendas?nova=1' },
             ].map((st) => (
               <li key={st.label} className={st.done ? 'done' : ''}>
@@ -105,7 +105,7 @@ export default function Dashboard() {
             ))}
           </ol>
           {empty && (
-            <button className="btn sm" style={{ marginTop: 12 }} onClick={async () => { await loadExamples(); toast('Exemplos carregados! Pode explorar e depois apagar 🍞') }}>Ver com exemplos prontos</button>
+            <button className="btn sm" style={{ marginTop: 12 }} onClick={async () => { await loadStarterCatalog(); toast('Cardápio carregado! Agora é só ajustar 🍞') }}>Carregar meu cardápio inicial</button>
           )}
         </section>
       )}

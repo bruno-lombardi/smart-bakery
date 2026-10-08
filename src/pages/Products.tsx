@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { db } from '../db/db'
-import { loadExamples } from '../db/seed'
+import { loadStarterCatalog } from '../db/seed'
 import { useIngredientMap, useIngredients, useProducts, useSettings } from '../db/hooks'
 import type { Ingredient, Product } from '../db/types'
 import { EmptyState } from '../components/Brand'
@@ -9,6 +9,7 @@ import { useFeedback } from '../components/Feedback'
 import { Icon } from '../components/Icon'
 import { IngredientForm } from '../components/IngredientForm'
 import { ProductForm } from '../components/ProductForm'
+import { ProductIcon } from '../components/ProductIcon'
 import { formatBRL, formatPct } from '../lib/money'
 import { productEconomics, type Health } from '../lib/goals'
 import { ingredientCostPerBase } from '../lib/pricing'
@@ -17,7 +18,8 @@ import { baseUnitOf } from '../lib/units'
 type Tab = 'produtos' | 'insumos'
 
 export default function Products() {
-  const [tab, setTab] = useState<Tab>('produtos')
+  const [params] = useSearchParams()
+  const [tab, setTab] = useState<Tab>(params.get('aba') === 'insumos' ? 'insumos' : 'produtos')
   return (
     <div>
       <div className="page-head">
@@ -30,12 +32,12 @@ export default function Products() {
         <button role="tab" aria-selected={tab === 'produtos'} className={tab === 'produtos' ? 'on' : ''} onClick={() => setTab('produtos')}>🥖 Produtos</button>
         <button role="tab" aria-selected={tab === 'insumos'} className={tab === 'insumos' ? 'on' : ''} onClick={() => setTab('insumos')}>🌾 Insumos</button>
       </div>
-      {tab === 'produtos' ? <ProductsTab /> : <IngredientsTab />}
+      {tab === 'produtos' ? <ProductsTab setSearchTab={setTab} /> : <IngredientsTab />}
     </div>
   )
 }
 
-function ProductsTab() {
+function ProductsTab({ setSearchTab }: { setSearchTab: (t: Tab) => void }) {
   const products = useProducts()
   const ingMap = useIngredientMap()
   const settings = useSettings()
@@ -69,13 +71,23 @@ function ProductsTab() {
             action={
               <div className="stack" style={{ alignItems: 'center' }}>
                 <button className="btn primary" onClick={() => setEditing('new')}><Icon name="plus" /> Cadastrar produto</button>
-                <button className="btn sm" onClick={async () => { await loadExamples(); toast('Exemplos carregados! Pode editar à vontade 🍞') }}>Ver com exemplos prontos</button>
+                <button className="btn sm" onClick={async () => { await loadStarterCatalog(); toast('Cardápio carregado! Agora é só ajustar 🍞') }}>Carregar meu cardápio inicial</button>
               </div>
             }
           />
         </div>
       ) : (
         <>
+          {products.some((p) => p.estimated) && (
+            <div className="notice info" style={{ marginBottom: 12 }}>
+              <span className="em">🧮</span>
+              <div className="grow">
+                <b>Deixei seu cardápio quase pronto, com custos estimados.</b>
+                <div className="small">Confira primeiro o preço dos <b>insumos</b> (o que você realmente paga) e depois revise cada produto. Quando estiver certo, toque em “Está certo”.</div>
+                <button className="btn sm" style={{ marginTop: 8 }} onClick={() => setSearchTab('insumos')}>Conferir meus insumos</button>
+              </div>
+            </div>
+          )}
           {(() => {
             const weak = products.filter((p) => productEconomics(p, ingMap, settings).health !== 'saudavel').length
             return weak > 0 ? (
@@ -100,10 +112,11 @@ function ProductsTab() {
               return (
                 <div className="item col" key={p.id} style={{ cursor: 'default' }}>
                   <div className="row" style={{ width: '100%', alignItems: 'center', gap: 12 }}>
-                    <div className="emoji">{p.emoji}</div>
+                    <div className="emoji"><ProductIcon icon={p.emoji} /></div>
                     <div className="grow">
                       <div className="title">{p.name}</div>
                       <div className="small muted">Custo {formatBRL(e.unitCost)} · rende {p.yield}</div>
+                      {p.note && <div className="tiny muted">{p.note}</div>}
                     </div>
                     <div className="right">
                       <div className="amount">{formatBRL(e.price)}</div>
@@ -111,8 +124,14 @@ function ProductsTab() {
                     </div>
                   </div>
                   <div className="row spread wrap">
-                    <span className={`margin-pill ${pill[e.health]}`}>{label[e.health]} · {formatPct(e.realMarginPct)}</span>
+                    <div className="row wrap" style={{ gap: 6 }}>
+                      <span className={`margin-pill ${pill[e.health]}`}>{label[e.health]} · {formatPct(e.realMarginPct)}</span>
+                      {p.estimated && <span className="badge parcial">Estimativa</span>}
+                    </div>
                     <div className="row" style={{ gap: 2 }}>
+                      {p.estimated && (
+                        <button className="btn sm green" onClick={async () => { await db.products.update(p.id!, { estimated: false }); toast(`${p.name} conferido ✓`) }}>✓ Está certo</button>
+                      )}
                       <button className="btn ghost sm" aria-label={`Editar ${p.name}`} onClick={() => setEditing(p)}><Icon name="edit" /> Editar</button>
                       <button className="btn ghost icon-btn" aria-label={`Excluir ${p.name}`} onClick={() => remove(p)}><Icon name="trash" /></button>
                     </div>
@@ -160,6 +179,13 @@ function IngredientsTab() {
       <div className="row" style={{ marginBottom: 12 }}>
         <button className="btn primary" onClick={() => setEditing('new')}><Icon name="plus" /> Novo insumo</button>
       </div>
+      {ingredients.some((i) => i.estimated) && (
+        <div className="notice" style={{ marginBottom: 12 }}>
+          <span className="em">🛒</span>
+          <div><b>Estes preços são estimativas de mercado.</b>
+            <div className="small">Toque em ✓ se o preço está parecido com o que você paga, ou em editar para colocar o valor certo. Quanto mais real, mais certinho o preço dos seus pães.</div></div>
+        </div>
+      )}
       {ingredients.length === 0 ? (
         <div className="card"><EmptyState title="Nenhum insumo ainda" text="Farinha, fermento, manteiga… cadastre o que você compra e quanto paga." /></div>
       ) : (
@@ -172,12 +198,15 @@ function IngredientsTab() {
                 <div className="emoji">🌾</div>
                 <div className="grow">
                   <div className="title">{i.name}</div>
-                  <div className="small muted">{i.packageQty} {i.unit} por {formatBRL(i.packagePrice)}</div>
+                  <div className="small muted">{i.packageQty} {i.unit} por {formatBRL(i.packagePrice)} {i.estimated && <span className="badge parcial">Preço estimado</span>}</div>
                 </div>
                 <div className="right small muted">
                   {base === 'un' ? `${formatBRL(per)}/un` : `${formatBRL(per * 1000)}/${base === 'g' ? 'kg' : 'litro'}`}
                 </div>
                 <div className="row" style={{ gap: 2 }}>
+                  {i.estimated && (
+                    <button className="btn sm green" aria-label={`${i.name}: preço está certo`} onClick={async () => { await db.ingredients.update(i.id!, { estimated: false }); toast(`${i.name} conferido ✓`) }}>✓</button>
+                  )}
                   <button className="btn ghost icon-btn" aria-label={`Editar ${i.name}`} onClick={() => setEditing(i)}><Icon name="edit" /></button>
                   <button className="btn ghost icon-btn" aria-label={`Excluir ${i.name}`} onClick={() => remove(i)}><Icon name="trash" /></button>
                 </div>

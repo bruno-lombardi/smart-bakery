@@ -9,6 +9,8 @@ export interface Ingredient {
   packageQty: number
   /** Quanto custou a embalagem (R$) */
   packagePrice: number
+  /** Preço de referência do catálogo inicial, ainda não conferido por ela */
+  estimated?: boolean
 }
 
 export interface RecipeLine {
@@ -36,6 +38,10 @@ export interface Product {
   /** Preço de venda definido (R$). Se vazio, usa o sugerido */
   price: number | null
   active: boolean
+  /** Observação curta (ex.: vendido por fatia) */
+  note?: string
+  /** Custos e preço do catálogo inicial, ainda não revisados por ela */
+  estimated?: boolean
 }
 
 export type OrderStatus = 'novo' | 'producao' | 'pronto' | 'entregue' | 'cancelado'

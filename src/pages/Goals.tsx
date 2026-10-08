@@ -6,6 +6,7 @@ import { Field, MoneyInput } from '../components/Fields'
 import { GoalCard, GoalNumbers } from '../components/GoalCard'
 import { useFeedback } from '../components/Feedback'
 import { Icon } from '../components/Icon'
+import { ProductIcon } from '../components/ProductIcon'
 import { weeklyStreak } from '../lib/achievements'
 import { simulate } from '../lib/goals'
 import { formatBRL, formatBRLShort, formatNumber } from '../lib/money'
@@ -89,6 +90,9 @@ export default function Goals() {
                   Cada pãozinho deixa em média <b>{formatBRL(plan.avgProfitPerUnit)}</b> de lucro, com a sua mistura de produtos e preços atuais.
                   {plan.avgProfitPerUnit <= 0 && ' Hoje seus preços não deixam lucro: ajuste-os em Preços.'}
                 </p>
+                {products.some((p) => p.estimated) && (
+                  <p className="small">🧮 Seus custos ainda são estimativas. <Link to="/produtos?aba=insumos" className="bold">Conferir os insumos</Link> deixa esse plano mais certinho.</p>
+                )}
                 {plan.perWeek != null && (
                   <p>Em resumo: <b>~{formatNumber(plan.perWeek, 0)} pãezinhos por semana</b> até o fim do mês e a meta é sua. 💪</p>
                 )}
@@ -103,7 +107,7 @@ export default function Goals() {
               <div className="list">
                 {plan.paths.map((p, i) => (
                   <div className="item" key={p.name} style={{ cursor: 'default' }}>
-                    <div className="emoji">{p.emoji}</div>
+                    <div className="emoji"><ProductIcon icon={p.emoji} /></div>
                     <div className="grow">
                       <div className="title">{p.name} {i === 0 && <span className="badge pago">mais lucrativo</span>}</div>
                       <div className="small muted">sobra {formatBRL(p.profitPerUnit)} em cada</div>

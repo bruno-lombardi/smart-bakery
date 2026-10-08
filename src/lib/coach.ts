@@ -1,5 +1,6 @@
 import type { Order, Transaction } from '../db/types'
 import { addDays } from './dates'
+import { iconText } from './icons'
 import type { Econ, GoalPlan } from './goals'
 import { formatBRL, formatBRLShort, formatNumber } from './money'
 import { isActive, orderPaid, orderTotal } from './orders'
@@ -98,7 +99,7 @@ export function buildInsights({ plan, econs, orders, txs, today }: InsightInput)
       out.push({
         id: 'best-hour',
         emoji: '⏱️',
-        title: `${best.product.emoji} ${best.product.name} é seu campeão de lucro por hora`,
+        title: `${iconText(best.product.emoji)} ${best.product.name} é seu campeão de lucro por hora`,
         text: `Cada hora de trabalho nele rende ${formatBRL(best.profitPerHour!)} de lucro, contra ${formatBRL(worst.profitPerHour!)} no ${worst.product.name}. Vale destacar nas conversas com clientes.`,
         tone: 'good',
       })

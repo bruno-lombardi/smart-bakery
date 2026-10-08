@@ -382,3 +382,10 @@ input[type='range'] { width: 100%; height: 36px; accent-color: var(--red); }
 .confetti span { position: absolute; top: -48px; animation: fall linear forwards; }
 @keyframes fall { to { transform: translateY(110vh) rotate(540deg); } }
 @media (prefers-reduced-motion: reduce) { .confetti { display: none; } }
+
+/* ===== Ícones de produto ===== */
+.picon { width: 1.12em; height: 1.12em; display: inline-block; vertical-align: -0.14em; }
+.item .emoji .picon { width: 1.05em; height: 1.05em; }
+.chip .picon { vertical-align: -0.18em; }
+.chip.icon-chip { font-size: 1.4rem; padding: 0 12px; display: inline-grid; place-items: center; }
+.chips.wrap-chips { flex-wrap: wrap; overflow: visible; }
