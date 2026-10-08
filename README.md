@@ -65,10 +65,14 @@ Depois da primeira visita, tudo funciona offline. Quando você publicar uma vers
 
 Sintoma: o job `deploy` falha em ~1 segundo, sem log, com a mensagem *"Branch `main` is not allowed to deploy to github-pages due to environment protection rules"*. Não é a proteção de branch do repositório, e sim a regra do **ambiente `github-pages`**, que só aceita deploy de branches autorizadas (por padrão, a branch padrão do repositório).
 
-1. **Settings → Branches → Default branch** → trocar para `main` (ícone de setas ⇄ → *Update*).
-2. **Settings → Environments → `github-pages` → Deployment branches and tags**. Se estiver em *Selected branches and tags*, confira se `main` está na lista (*Add deployment branch or tag rule* → `main`). Remova regras que apontem só para branches `claude/...`.
-3. **Settings → Pages → Source** deve estar em **GitHub Actions**.
-4. **Actions → Testar e publicar → Run workflow** (branch `main`). Prefira isso a “Re-run” da execução antiga, que republicaria um commit velho.
+1. **Settings → Environments → `github-pages` → Deployment branches and tags.** Mudar a branch padrão do repositório **não** altera essa regra. Escolha uma destas opções:
+   - **Selected branches and tags** → *Add deployment branch or tag rule* → `main` (e remova regras que apontem só para branches `claude/...`). É a opção mais segura.
+   - **Protected branches only** só aceita branches com proteção; a `main` ainda não tem. Troque para a opção acima, ou proteja a `main` em *Settings → Branches*.
+   - **No restriction** também resolve, mas deixa qualquer branch publicar.
+2. **Settings → Pages → Source** deve estar em **GitHub Actions**.
+3. **Actions → Testar e publicar → Run workflow** (branch `main`). Prefira isso a “Re-run” de uma execução antiga, que republicaria um commit velho.
+
+A mensagem exata aparece nas *annotations* do job `deploy` (na página da execução, em vermelho).
 
 > Outro endereço (Cloudflare Pages, Netlify)? Gere o build com `BASE_PATH=/ npm run build` e publique a pasta `dist/`.
 
